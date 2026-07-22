@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { PLAN_DETAILS, type Plan } from '../lib/types';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { MarketingNav } from '../components/marketing/MarketingNav';
 
 const PLAN_ORDER: Plan[] = ['single_state', 'multi_state', 'nationwide'];
 
@@ -10,12 +11,9 @@ const PLAN_ORDER: Plan[] = ['single_state', 'multi_state', 'nationwide'];
 // redirect on success; the "Coming Soon" buttons below are placeholders.
 export default function Pricing() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-navy)', padding: '64px 16px' }}>
-      <div style={{ maxWidth: 960, margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 4 }}>HARBINGER</div>
-        <p style={{ color: 'var(--color-amber)', fontWeight: 600, fontSize: 13, marginBottom: 32 }}>
-          First to know. First to close.
-        </p>
+    <div style={{ minHeight: '100vh', background: 'var(--color-navy)' }}>
+      <MarketingNav />
+      <div style={{ maxWidth: 960, margin: '0 auto', textAlign: 'center', padding: '32px 16px 64px' }}>
         <h1 style={{ color: '#fff', fontSize: 28, marginBottom: 8 }}>Simple, plan-based pricing</h1>
         <p style={{ color: 'rgba(248,246,241,0.7)', marginBottom: 40 }}>
           All plans are free while Harbinger is in early access.
