@@ -3,7 +3,7 @@ import { AuthLayout } from '../components/auth/AuthLayout';
 
 export default function Signup() {
   return (
-    <AuthLayout title="Create your account" subtitle="Set up your Harbinger workspace in minutes.">
+    <AuthLayout title="Create your account" subtitle="Set up your LienLoop workspace in minutes.">
       <SignupForm />
     </AuthLayout>
   );

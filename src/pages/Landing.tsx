@@ -164,7 +164,7 @@ export default function Landing() {
               animationDelay: '160ms',
             }}
           >
-            Harbinger delivers pre-foreclosure and code violation records the moment they hit
+            LienLoop delivers pre-foreclosure and code violation records the moment they hit
             public record — already skip-traced with owner phone numbers and emails — so you're
             the first call the owner ever gets.
           </p>
@@ -223,7 +223,7 @@ export default function Landing() {
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px' }}>
           <h2 style={{ fontSize: 28, textAlign: 'center', marginBottom: 12 }}>Built for speed to first contact</h2>
           <p style={{ textAlign: 'center', color: 'var(--color-slate)', maxWidth: 560, margin: '0 auto 48px' }}>
-            Everything about Harbinger is designed around one number: how fast you can get an
+            Everything about LienLoop is designed around one number: how fast you can get an
             owner on the phone after a record becomes public.
           </p>
           <div className="hb-bento-grid">
@@ -330,7 +330,7 @@ export default function Landing() {
           background: 'var(--color-navy)',
         }}
       >
-        © {new Date().getFullYear()} Harbinger. All rights reserved.
+        © {new Date().getFullYear()} LienLoop. All rights reserved.
       </footer>
     </div>
   );

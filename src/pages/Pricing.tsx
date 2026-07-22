@@ -35,7 +35,7 @@ export default function Pricing() {
             Simple, plan-based pricing
           </h1>
           <p className="hb-fade-up" style={{ color: 'rgba(248,246,241,0.7)', marginBottom: 48, animationDelay: '80ms' }}>
-            All plans are free while Harbinger is in early access.
+            All plans are free while LienLoop is in early access.
           </p>
 
           <div

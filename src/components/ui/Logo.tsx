@@ -14,7 +14,7 @@ export function Logo({ size = 28, showWordmark = true, color = 'var(--color-navy
       <LogoMark size={size} />
       {showWordmark && (
         <span style={{ fontSize: size * 0.64, fontWeight: 800, letterSpacing: '-0.02em', color: 'inherit' }}>
-          HARBINGER
+          LienLoop
         </span>
       )}
     </span>

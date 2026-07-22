@@ -1,5 +1,5 @@
 -- ============================================================================
--- Harbinger — Supabase schema
+-- LienLoop — Supabase schema
 -- Run this in the Supabase SQL editor (or via `supabase db push`).
 -- Safe to re-run: tables/columns use IF NOT EXISTS and policies are dropped
 -- and recreated, so re-running this file after a schema update just applies
