@@ -9,6 +9,7 @@ export interface UserProfile {
   plan: Plan | null;
   lead_type: LeadType | null;
   selected_states: string[];
+  selected_counties: string[];
   onboarding_complete: boolean;
   created_at: string;
 }

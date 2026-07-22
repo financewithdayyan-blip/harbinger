@@ -6,6 +6,7 @@ interface OnboardingConfirmProps {
   plan: Plan;
   leadType: LeadType;
   states: string[];
+  counties: string[];
   onConfirm: () => void;
   loading: boolean;
 }
@@ -15,7 +16,7 @@ const LEAD_TYPE_LABELS: Record<LeadType, string> = {
   code_violations: 'Code Violations',
 };
 
-export function OnboardingConfirm({ plan, leadType, states, onConfirm, loading }: OnboardingConfirmProps) {
+export function OnboardingConfirm({ plan, leadType, states, counties, onConfirm, loading }: OnboardingConfirmProps) {
   const stateLabel =
     plan === 'nationwide'
       ? 'All 50 states + DC'
@@ -37,6 +38,7 @@ export function OnboardingConfirm({ plan, leadType, states, onConfirm, loading }
         <Row label="Plan" value={PLAN_DETAILS[plan].title} />
         <Row label="Lead Type" value={LEAD_TYPE_LABELS[leadType]} />
         <Row label="States" value={stateLabel || '—'} />
+        <Row label="Counties" value={counties.length > 0 ? counties.join(', ') : 'All counties'} />
       </div>
       <Button onClick={onConfirm} loading={loading} style={{ width: '100%' }}>
         Enter Dashboard

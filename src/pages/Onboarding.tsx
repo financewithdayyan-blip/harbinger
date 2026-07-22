@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PlanSelector } from '../components/onboarding/PlanSelector';
 import { LeadTypeSelector } from '../components/onboarding/LeadTypeSelector';
 import { StateSelector } from '../components/onboarding/StateSelector';
+import { CountySelector } from '../components/onboarding/CountySelector';
 import { OnboardingConfirm } from '../components/onboarding/OnboardingConfirm';
 import { Button } from '../components/ui/Button';
 import { Logo } from '../components/ui/Logo';
@@ -10,7 +11,7 @@ import { useProfile } from '../hooks/useProfile';
 import type { LeadType, Plan } from '../lib/types';
 import { PLAN_DETAILS } from '../lib/types';
 
-const STEPS = ['Plan', 'Lead Type', 'States', 'Confirm'];
+const STEPS = ['Plan', 'Lead Type', 'States', 'Counties', 'Confirm'];
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function Onboarding() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [leadType, setLeadType] = useState<LeadType | null>(null);
   const [states, setStates] = useState<string[]>([]);
+  const [counties, setCounties] = useState<string[]>([]);
 
   function handlePlanChange(nextPlan: Plan) {
     setPlan(nextPlan);
@@ -35,7 +37,8 @@ export default function Onboarding() {
     (step === 0 && plan !== null) ||
     (step === 1 && leadType !== null) ||
     (step === 2 && (plan === 'nationwide' || states.length > 0)) ||
-    step === 3;
+    step === 3 ||
+    step === 4;
 
   async function handleConfirm() {
     if (!plan || !leadType) return;
@@ -43,6 +46,7 @@ export default function Onboarding() {
       plan,
       leadType,
       selectedStates: plan === 'nationwide' ? [] : states,
+      selectedCounties: counties,
       onboardingComplete: true,
     });
     navigate('/dashboard');
@@ -85,13 +89,24 @@ export default function Onboarding() {
               <StateSelector plan={plan} value={states} onChange={setStates} />
             </>
           )}
-          {step === 3 && plan && leadType && (
+          {step === 3 && (
+            <>
+              <h2 style={{ fontSize: 18, marginBottom: 6 }}>Narrow down to specific counties</h2>
+              <p style={{ fontSize: 13, color: 'var(--color-slate)', marginBottom: 16 }}>
+                Optional. Add counties to only get leads from those — leave it empty to get every
+                county in your selected states.
+              </p>
+              <CountySelector value={counties} onChange={setCounties} />
+            </>
+          )}
+          {step === 4 && plan && leadType && (
             <>
               <h2 style={{ fontSize: 18, marginBottom: 16 }}>Confirm your setup</h2>
               <OnboardingConfirm
                 plan={plan}
                 leadType={leadType}
                 states={states}
+                counties={counties}
                 onConfirm={handleConfirm}
                 loading={saving}
               />
@@ -100,7 +115,7 @@ export default function Onboarding() {
 
           {error && <p style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 12 }}>{error}</p>}
 
-          {step < 3 && (
+          {step < 4 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 28 }}>
               <Button variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
                 Back

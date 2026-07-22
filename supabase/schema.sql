@@ -1,6 +1,9 @@
 -- ============================================================================
 -- Harbinger — Supabase schema
 -- Run this in the Supabase SQL editor (or via `supabase db push`).
+-- Safe to re-run: tables/columns use IF NOT EXISTS and policies are dropped
+-- and recreated, so re-running this file after a schema update just applies
+-- the diff.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -22,20 +25,28 @@ create table if not exists public.user_profiles (
   created_at timestamptz not null default now()
 );
 
+-- County-level narrowing within selected_states. Empty array means "every
+-- county in the selected states" (the original, county-less behavior).
+alter table public.user_profiles
+  add column if not exists selected_counties text[] not null default '{}';
+
 alter table public.user_profiles enable row level security;
 
 -- Users can read their own profile
+drop policy if exists "user_profiles_select_own" on public.user_profiles;
 create policy "user_profiles_select_own"
   on public.user_profiles for select
   using (auth.uid() = id);
 
 -- Users can update their own profile
+drop policy if exists "user_profiles_update_own" on public.user_profiles;
 create policy "user_profiles_update_own"
   on public.user_profiles for update
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
 -- Users can insert their own profile row (on signup / onboarding)
+drop policy if exists "user_profiles_insert_own" on public.user_profiles;
 create policy "user_profiles_insert_own"
   on public.user_profiles for insert
   with check (auth.uid() = id);
@@ -54,10 +65,12 @@ alter table public.admin_users enable row level security;
 -- frontend admin-check on login). No one can write to this table from the
 -- client — admin status is only ever toggled by an existing admin via a
 -- policy below, or from the Supabase dashboard / service role.
+drop policy if exists "admin_users_select_own" on public.admin_users;
 create policy "admin_users_select_own"
   on public.admin_users for select
   using (auth.uid() = user_id);
 
+drop policy if exists "admin_users_select_all_if_admin" on public.admin_users;
 create policy "admin_users_select_all_if_admin"
   on public.admin_users for select
   using (
@@ -67,6 +80,7 @@ create policy "admin_users_select_all_if_admin"
     )
   );
 
+drop policy if exists "admin_users_update_if_admin" on public.admin_users;
 create policy "admin_users_update_if_admin"
   on public.admin_users for update
   using (
@@ -84,6 +98,7 @@ create policy "admin_users_update_if_admin"
 
 -- Admins can grant/revoke admin status for a user who doesn't have an
 -- admin_users row yet (the User Management "toggle admin" upsert).
+drop policy if exists "admin_users_insert_if_admin" on public.admin_users;
 create policy "admin_users_insert_if_admin"
   on public.admin_users for insert
   with check (
@@ -138,6 +153,7 @@ create index if not exists leads_county_idx on public.leads (county);
 alter table public.leads enable row level security;
 
 -- Admins: full access
+drop policy if exists "leads_admin_all" on public.leads;
 create policy "leads_admin_all"
   on public.leads for all
   using (
@@ -153,7 +169,10 @@ create policy "leads_admin_all"
     )
   );
 
--- Regular users: read-only, filtered by their plan's states + lead type
+-- Regular users: read-only, filtered by their plan's states + lead type,
+-- and further narrowed to selected_counties when the user has picked any
+-- (an empty selected_counties means "every county in my selected states").
+drop policy if exists "leads_select_by_plan" on public.leads;
 create policy "leads_select_by_plan"
   on public.leads for select
   using (
@@ -165,6 +184,10 @@ create policy "leads_select_by_plan"
         and (
           up.plan = 'nationwide'
           or leads.state = any (up.selected_states)
+        )
+        and (
+          coalesce(array_length(up.selected_counties, 1), 0) = 0
+          or leads.county = any (up.selected_counties)
         )
     )
   );

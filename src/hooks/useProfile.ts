@@ -9,6 +9,7 @@ interface SaveProfileParams {
   plan?: Plan;
   leadType?: LeadType;
   selectedStates?: string[];
+  selectedCounties?: string[];
   onboardingComplete?: boolean;
 }
 
@@ -28,6 +29,7 @@ export function useProfile() {
     if (params.plan !== undefined) payload.plan = params.plan;
     if (params.leadType !== undefined) payload.lead_type = params.leadType;
     if (params.selectedStates !== undefined) payload.selected_states = params.selectedStates;
+    if (params.selectedCounties !== undefined) payload.selected_counties = params.selectedCounties;
     if (params.onboardingComplete !== undefined) payload.onboarding_complete = params.onboardingComplete;
 
     const { error: upsertError } = await supabase.from('user_profiles').upsert(payload);

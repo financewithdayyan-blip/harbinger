@@ -11,6 +11,7 @@ interface UserRow {
   plan: Plan | null;
   lead_type: LeadType | null;
   selected_states: string[];
+  selected_counties: string[];
   created_at: string;
   is_admin: boolean;
 }
@@ -39,7 +40,7 @@ export function UserTable() {
     const [{ data: profiles, error: profilesError }, { data: admins, error: adminsError }] = await Promise.all([
       supabase
         .from('user_profiles')
-        .select('id, full_name, company_name, plan, lead_type, selected_states, created_at')
+        .select('id, full_name, company_name, plan, lead_type, selected_states, selected_counties, created_at')
         .order('created_at', { ascending: false }),
       supabase.from('admin_users').select('user_id, is_admin'),
     ]);
@@ -94,7 +95,7 @@ export function UserTable() {
       <table style={{ width: '100%', fontSize: 13 }}>
         <thead>
           <tr style={{ background: 'var(--color-navy)', color: 'var(--color-offwhite)' }}>
-            {['Name', 'Company', 'Plan', 'States', 'Lead Type', 'Signed Up', 'Admin'].map((h) => (
+            {['Name', 'Company', 'Plan', 'States', 'Counties', 'Lead Type', 'Signed Up', 'Admin'].map((h) => (
               <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, textTransform: 'uppercase' }}>
                 {h}
               </th>
@@ -109,6 +110,9 @@ export function UserTable() {
               <td style={{ padding: '10px 12px' }}>{u.plan ? PLAN_LABELS[u.plan] : '—'}</td>
               <td style={{ padding: '10px 12px' }}>
                 {u.plan === 'nationwide' ? 'All' : u.selected_states.join(', ') || '—'}
+              </td>
+              <td style={{ padding: '10px 12px' }}>
+                {u.selected_counties.length > 0 ? u.selected_counties.join(', ') : 'All'}
               </td>
               <td style={{ padding: '10px 12px' }}>{u.lead_type ? LEAD_TYPE_LABELS[u.lead_type] : '—'}</td>
               <td style={{ padding: '10px 12px' }}>{new Date(u.created_at).toLocaleDateString()}</td>
