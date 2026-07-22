@@ -1,19 +1,13 @@
 import { supabase } from './supabase';
 
-export async function signUp(params: {
-  email: string;
-  password: string;
-  fullName: string;
-  companyName: string;
-}) {
-  const { email, password, fullName, companyName } = params;
+export async function signUp(params: { email: string; password: string; fullName: string }) {
+  const { email, password, fullName } = params;
   return supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         full_name: fullName,
-        company_name: companyName,
       },
     },
   });

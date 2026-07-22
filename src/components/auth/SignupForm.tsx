@@ -7,7 +7,6 @@ import { Button } from '../ui/Button';
 export function SignupForm() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
-  const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +17,7 @@ export function SignupForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { data, error: signUpError } = await signUp({ email, password, fullName, companyName });
+    const { data, error: signUpError } = await signUp({ email, password, fullName });
     setLoading(false);
 
     if (signUpError) {
@@ -52,13 +51,6 @@ export function SignupForm() {
         value={fullName}
         onChange={(e) => setFullName(e.target.value)}
         placeholder="Jane Smith"
-      />
-      <Input
-        label="Company name"
-        required
-        value={companyName}
-        onChange={(e) => setCompanyName(e.target.value)}
-        placeholder="Smith Capital LLC"
       />
       <Input
         label="Email"
