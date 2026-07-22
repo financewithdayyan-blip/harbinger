@@ -1,7 +1,7 @@
-import { useRef, useState, type DragEvent } from 'react';
+import { useRef, useState, type DragEvent, type ReactNode } from 'react';
 import Papa from 'papaparse';
 import { supabase } from '../../lib/supabase';
-import { LEAD_COLUMNS, type Lead, type LeadType } from '../../lib/types';
+import { LEAD_COLUMNS, US_STATES, type Lead, type LeadType } from '../../lib/types';
 import { ColumnMapper, type ColumnMapping } from './ColumnMapper';
 import { Button } from '../ui/Button';
 
@@ -19,9 +19,10 @@ interface UploadError {
 
 interface SuccessSummary {
   count: number;
-  states: string[];
+  state: string;
+  county: string;
   listType: LeadType;
-  date: string;
+  datePulled: string;
 }
 
 function normalize(s: string) {
@@ -38,12 +39,23 @@ function autoMap(headers: string[]): ColumnMapping {
   return mapping;
 }
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export function CSVUploader() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [parsed, setParsed] = useState<ParseResult | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>({});
+
+  // Batch-level tags: one state, one county, one list type, one date pulled
+  // applied to every row in this upload — set once instead of mapped per row.
   const [listType, setListType] = useState<LeadType>('pre_foreclosure');
+  const [state, setState] = useState('');
+  const [county, setCounty] = useState('');
+  const [datePulled, setDatePulled] = useState(todayISO());
+
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [errors, setErrors] = useState<UploadError[]>([]);
@@ -76,13 +88,17 @@ export function CSVUploader() {
     setErrors([]);
     setSummary(null);
     setProgress(0);
+    setState('');
+    setCounty('');
+    setDatePulled(todayISO());
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   const requiredMissing = LEAD_COLUMNS.filter((c) => c.required && !mapping[c.key]);
+  const batchTagsMissing = !state || !county.trim() || !datePulled;
 
   async function handleUpload() {
-    if (!parsed) return;
+    if (!parsed || batchTagsMissing) return;
     setUploading(true);
     setErrors([]);
     setSummary(null);
@@ -106,9 +122,10 @@ export function CSVUploader() {
 
       validRows.push({
         ...lead,
-        state: (lead.state as string).toUpperCase(),
+        state,
+        county: county.trim(),
         list_type: listType,
-        date_pulled: lead.date_pulled || new Date().toISOString().slice(0, 10),
+        date_pulled: datePulled,
       } as Partial<Lead>);
     });
 
@@ -131,12 +148,16 @@ export function CSVUploader() {
       setProgress(Math.round((inserted / Math.max(1, validRows.length)) * 100));
     }
 
-    const states = Array.from(new Set(validRows.map((r) => r.state as string))).sort();
     setSummary({
       count: inserted,
-      states,
+      state,
+      county: county.trim(),
       listType,
-      date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      datePulled: new Date(datePulled + 'T00:00:00').toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
     });
     setUploading(false);
   }
@@ -187,25 +208,66 @@ export function CSVUploader() {
             </Button>
           </div>
 
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-slate)', display: 'block', marginBottom: 6 }}>
-              List Type (applied to entire batch)
-            </label>
-            <select
-              value={listType}
-              onChange={(e) => setListType(e.target.value as LeadType)}
-              style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--color-border)', fontSize: 14 }}
-            >
-              <option value="pre_foreclosure">Pre-Foreclosure</option>
-              <option value="code_violations">Code Violations</option>
-            </select>
+          <div
+            style={{
+              border: '1px solid var(--color-border)',
+              borderRadius: 10,
+              padding: 16,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+              gap: 14,
+              background: '#fff',
+            }}
+          >
+            <BatchField label="List Type">
+              <select
+                value={listType}
+                onChange={(e) => setListType(e.target.value as LeadType)}
+                style={fieldStyle}
+              >
+                <option value="pre_foreclosure">Pre-Foreclosure</option>
+                <option value="code_violations">Code Violations</option>
+              </select>
+            </BatchField>
+
+            <BatchField label="State" required>
+              <select value={state} onChange={(e) => setState(e.target.value)} style={fieldStyle}>
+                <option value="">Select…</option>
+                {US_STATES.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.name} ({s.code})
+                  </option>
+                ))}
+              </select>
+            </BatchField>
+
+            <BatchField label="County" required>
+              <input
+                type="text"
+                value={county}
+                onChange={(e) => setCounty(e.target.value)}
+                placeholder="e.g. Maricopa"
+                style={fieldStyle}
+              />
+            </BatchField>
+
+            <BatchField label="Date Pulled" required>
+              <input
+                type="date"
+                value={datePulled}
+                onChange={(e) => setDatePulled(e.target.value)}
+                style={fieldStyle}
+              />
+            </BatchField>
           </div>
 
           <ColumnMapper csvHeaders={parsed.headers} mapping={mapping} onChange={setMapping} />
 
-          {requiredMissing.length > 0 && (
+          {(requiredMissing.length > 0 || batchTagsMissing) && (
             <p style={{ fontSize: 13, color: 'var(--color-danger)' }}>
-              Map required fields before uploading: {requiredMissing.map((m) => m.label).join(', ')}
+              {batchTagsMissing && 'Fill in State, County, and Date Pulled above. '}
+              {requiredMissing.length > 0 &&
+                `Map required fields before uploading: ${requiredMissing.map((m) => m.label).join(', ')}`}
             </p>
           )}
 
@@ -225,7 +287,7 @@ export function CSVUploader() {
             </div>
           )}
 
-          <Button onClick={handleUpload} loading={uploading} disabled={requiredMissing.length > 0}>
+          <Button onClick={handleUpload} loading={uploading} disabled={requiredMissing.length > 0 || batchTagsMissing}>
             Upload {parsed.rows.length} rows
           </Button>
         </>
@@ -241,8 +303,8 @@ export function CSVUploader() {
           }}
         >
           <p style={{ fontWeight: 700, color: 'var(--color-success)', marginBottom: 4 }}>
-            {summary.count.toLocaleString()} leads uploaded for {summary.states.join(', ')} —{' '}
-            {summary.listType === 'pre_foreclosure' ? 'Pre-Foreclosure' : 'Code Violations'} — {summary.date}
+            {summary.count.toLocaleString()} leads uploaded for {summary.county}, {summary.state} —{' '}
+            {summary.listType === 'pre_foreclosure' ? 'Pre-Foreclosure' : 'Code Violations'} — {summary.datePulled}
           </p>
           <Button variant="ghost" onClick={reset} style={{ marginTop: 12 }}>
             Upload another file
@@ -279,6 +341,26 @@ export function CSVUploader() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const fieldStyle = {
+  padding: '8px 10px',
+  borderRadius: 6,
+  border: '1px solid var(--color-border)',
+  fontSize: 13,
+  width: '100%',
+};
+
+function BatchField({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) {
+  return (
+    <div>
+      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-slate)', display: 'block', marginBottom: 6 }}>
+        {label}
+        {required && <span style={{ color: 'var(--color-danger)' }}> *</span>}
+      </label>
+      {children}
     </div>
   );
 }

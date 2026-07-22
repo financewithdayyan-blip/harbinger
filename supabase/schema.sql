@@ -136,12 +136,28 @@ create table if not exists public.leads (
   property_city text,
   property_state text,
   property_zip text,
-  mailing_street text,
-  mailing_city text,
-  mailing_state text,
-  mailing_zip text,
+  beds text,
+  baths text,
+  sqft text,
+  lot_size text,
+  property_type text,
+  notes text,
   created_at timestamptz not null default now()
 );
+
+-- Replaced mailing_* address columns with property detail columns — no
+-- mailing-address use case existed, and property specs (beds/baths/sqft/
+-- lot size/type/notes) are what's actually needed at the lead level.
+alter table public.leads drop column if exists mailing_street;
+alter table public.leads drop column if exists mailing_city;
+alter table public.leads drop column if exists mailing_state;
+alter table public.leads drop column if exists mailing_zip;
+alter table public.leads add column if not exists beds text;
+alter table public.leads add column if not exists baths text;
+alter table public.leads add column if not exists sqft text;
+alter table public.leads add column if not exists lot_size text;
+alter table public.leads add column if not exists property_type text;
+alter table public.leads add column if not exists notes text;
 
 create index if not exists leads_state_idx on public.leads (state);
 create index if not exists leads_list_type_idx on public.leads (list_type);

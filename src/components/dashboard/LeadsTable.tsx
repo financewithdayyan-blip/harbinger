@@ -28,10 +28,12 @@ const COLUMNS: { key: keyof Lead | 'select'; label: string }[] = [
   { key: 'property_city', label: 'Property City' },
   { key: 'property_state', label: 'Prop. St' },
   { key: 'property_zip', label: 'Zip' },
-  { key: 'mailing_street', label: 'Mailing Street' },
-  { key: 'mailing_city', label: 'Mailing City' },
-  { key: 'mailing_state', label: 'Mailing St' },
-  { key: 'mailing_zip', label: 'Mailing Zip' },
+  { key: 'beds', label: 'Beds' },
+  { key: 'baths', label: 'Baths' },
+  { key: 'sqft', label: 'Sqft' },
+  { key: 'lot_size', label: 'Lot Size' },
+  { key: 'property_type', label: 'Property Type' },
+  { key: 'notes', label: 'Notes' },
 ];
 
 const LEAD_TYPE_LABELS: Record<string, string> = {
@@ -155,10 +157,12 @@ export function LeadsTable({ leads, loading, error }: LeadsTableProps) {
               <td style={{ padding: '10px 12px' }}>{lead.property_city || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.property_state || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.property_zip || '—'}</td>
-              <td style={{ padding: '10px 12px' }}>{lead.mailing_street || '—'}</td>
-              <td style={{ padding: '10px 12px' }}>{lead.mailing_city || '—'}</td>
-              <td style={{ padding: '10px 12px' }}>{lead.mailing_state || '—'}</td>
-              <td style={{ padding: '10px 12px' }}>{lead.mailing_zip || '—'}</td>
+              <td style={{ padding: '10px 12px' }}>{lead.beds || '—'}</td>
+              <td style={{ padding: '10px 12px' }}>{lead.baths || '—'}</td>
+              <td style={{ padding: '10px 12px' }}>{lead.sqft || '—'}</td>
+              <td style={{ padding: '10px 12px' }}>{lead.lot_size || '—'}</td>
+              <td style={{ padding: '10px 12px' }}>{lead.property_type || '—'}</td>
+              <td style={{ padding: '10px 12px' }}>{lead.notes || '—'}</td>
             </tr>
           ))}
         </tbody>

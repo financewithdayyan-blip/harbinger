@@ -34,18 +34,20 @@ export interface Lead {
   property_city: string | null;
   property_state: string | null;
   property_zip: string | null;
-  mailing_street: string | null;
-  mailing_city: string | null;
-  mailing_state: string | null;
-  mailing_zip: string | null;
+  beds: string | null;
+  baths: string | null;
+  sqft: string | null;
+  lot_size: string | null;
+  property_type: string | null;
+  notes: string | null;
   created_at: string;
 }
 
+// Per-row CSV-mappable fields. list_type, state, county, and date_pulled are
+// batch-level tags set once for the whole upload (see CSVUploader), not
+// mapped per row, so they're intentionally excluded here.
 export const LEAD_COLUMNS: { key: keyof Lead; label: string; required?: boolean }[] = [
-  { key: 'date_pulled', label: 'Date Pulled' },
   { key: 'case_number', label: 'Case #' },
-  { key: 'state', label: 'State', required: true },
-  { key: 'county', label: 'County' },
   { key: 'auction_date', label: 'Auction Date' },
   { key: 'owner_first', label: 'Owner First' },
   { key: 'owner_last', label: 'Owner Last' },
@@ -59,10 +61,12 @@ export const LEAD_COLUMNS: { key: keyof Lead; label: string; required?: boolean 
   { key: 'property_city', label: 'Property City' },
   { key: 'property_state', label: 'Prop. St' },
   { key: 'property_zip', label: 'Zip' },
-  { key: 'mailing_street', label: 'Mailing Street' },
-  { key: 'mailing_city', label: 'Mailing City' },
-  { key: 'mailing_state', label: 'Mailing St' },
-  { key: 'mailing_zip', label: 'Mailing Zip' },
+  { key: 'beds', label: 'Beds' },
+  { key: 'baths', label: 'Baths' },
+  { key: 'sqft', label: 'Sqft' },
+  { key: 'lot_size', label: 'Lot Size' },
+  { key: 'property_type', label: 'Property Type' },
+  { key: 'notes', label: 'Notes' },
 ];
 
 export const US_STATES: { code: string; name: string }[] = [
