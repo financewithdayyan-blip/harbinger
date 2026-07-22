@@ -46,11 +46,12 @@ const variants: Record<Variant, CSSProperties> = {
   },
 };
 
-export function Button({ variant = 'primary', loading, disabled, children, style, ...rest }: ButtonProps) {
+export function Button({ variant = 'primary', loading, disabled, children, style, className, ...rest }: ButtonProps) {
   return (
     <button
       {...rest}
       disabled={disabled || loading}
+      className={disabled || loading ? className : `hb-btn hb-btn-${variant} ${className ?? ''}`.trim()}
       style={{
         ...base,
         ...variants[variant],

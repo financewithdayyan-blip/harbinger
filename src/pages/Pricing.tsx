@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
-import { PLAN_DETAILS, type Plan } from '../lib/types';
+import type { Plan } from '../lib/types';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { MarketingNav } from '../components/marketing/MarketingNav';
+import { PlanCard } from '../components/marketing/PlanCard';
+import './Landing.css';
 
 const PLAN_ORDER: Plan[] = ['single_state', 'multi_state', 'nationwide'];
 
@@ -13,48 +15,56 @@ export default function Pricing() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-navy)' }}>
       <MarketingNav />
-      <div style={{ maxWidth: 960, margin: '0 auto', textAlign: 'center', padding: '32px 16px 64px' }}>
-        <h1 style={{ color: '#fff', fontSize: 28, marginBottom: 8 }}>Simple, plan-based pricing</h1>
-        <p style={{ color: 'rgba(248,246,241,0.7)', marginBottom: 40 }}>
-          All plans are free while Harbinger is in early access.
-        </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-          {PLAN_ORDER.map((plan) => {
-            const details = PLAN_DETAILS[plan];
-            return (
-              <div
-                key={plan}
-                style={{
-                  background: '#fff',
-                  borderRadius: 12,
-                  padding: 28,
-                  textAlign: 'left',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 16,
-                }}
-              >
-                <div>
-                  <h3 style={{ fontSize: 18 }}>{details.title}</h3>
-                  <p style={{ color: 'var(--color-slate)', fontSize: 13, marginTop: 6 }}>{details.description}</p>
-                </div>
+      <section style={{ position: 'relative', overflow: 'hidden' }}>
+        <div className="hb-grain" />
+        <div
+          className="hb-blob"
+          style={{
+            width: 320,
+            height: 320,
+            top: -120,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'radial-gradient(circle, rgba(245,166,35,0.3), transparent 70%)',
+            animation: 'hb-float-slow 14s ease-in-out infinite',
+          }}
+        />
+        <div style={{ position: 'relative', maxWidth: 960, margin: '0 auto', textAlign: 'center', padding: '48px 16px 88px' }}>
+          <h1 className="hb-fade-up" style={{ color: '#fff', fontSize: 32, marginBottom: 8 }}>
+            Simple, plan-based pricing
+          </h1>
+          <p className="hb-fade-up" style={{ color: 'rgba(248,246,241,0.7)', marginBottom: 48, animationDelay: '80ms' }}>
+            All plans are free while Harbinger is in early access.
+          </p>
+
+          <div
+            className="hb-fade-up"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: 28,
+              animationDelay: '160ms',
+            }}
+          >
+            {PLAN_ORDER.map((plan) => (
+              <PlanCard key={plan} plan={plan} featured={plan === 'nationwide'}>
                 <Badge tone="amber">FREE (for now)</Badge>
-                <div style={{ fontSize: 28, fontWeight: 800 }}>$0</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--color-navy)' }}>$0</div>
                 <Button disabled style={{ width: '100%' }}>
                   Coming Soon
                 </Button>
-              </div>
-            );
-          })}
-        </div>
+              </PlanCard>
+            ))}
+          </div>
 
-        <p style={{ marginTop: 40 }}>
-          <Link to="/signup" style={{ color: 'var(--color-amber)', fontWeight: 600 }}>
-            Sign up free →
-          </Link>
-        </p>
-      </div>
+          <p style={{ marginTop: 48 }}>
+            <Link to="/signup" style={{ color: 'var(--color-amber)', fontWeight: 600 }}>
+              Sign up free →
+            </Link>
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
