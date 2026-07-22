@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { signOut } from '../../lib/auth';
+import { Logo } from '../ui/Logo';
 
 export function Sidebar() {
   const navigate = useNavigate();
@@ -25,8 +26,8 @@ export function Sidebar() {
       }}
     >
       <div style={{ marginBottom: 36 }}>
-        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em' }}>HARBINGER</div>
-        <div style={{ fontSize: 10, color: 'var(--color-amber)', fontWeight: 600, marginTop: 2 }}>
+        <Logo size={24} color="var(--color-offwhite)" />
+        <div style={{ fontSize: 10, color: 'var(--color-amber)', fontWeight: 600, marginTop: 6, marginLeft: 2 }}>
           First to know. First to close.
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
+import { Logo } from '../ui/Logo';
 
 export function MarketingNav() {
   const [scrolled, setScrolled] = useState(false);
@@ -36,28 +37,8 @@ export function MarketingNav() {
           padding: '20px 24px',
         }}
       >
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
-            <span
-              style={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: '50%',
-                background: 'var(--color-amber)',
-                animation: 'hb-pulse-ring 1.8s cubic-bezier(0.4,0,0.6,1) infinite',
-              }}
-            />
-            <span
-              style={{
-                position: 'relative',
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: 'var(--color-amber)',
-              }}
-            />
-          </span>
-          <span style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>HARBINGER</span>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <Logo size={30} color="#fff" />
         </Link>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: 28 }}>

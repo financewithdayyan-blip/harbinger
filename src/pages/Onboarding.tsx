@@ -5,6 +5,7 @@ import { LeadTypeSelector } from '../components/onboarding/LeadTypeSelector';
 import { StateSelector } from '../components/onboarding/StateSelector';
 import { OnboardingConfirm } from '../components/onboarding/OnboardingConfirm';
 import { Button } from '../components/ui/Button';
+import { Logo } from '../components/ui/Logo';
 import { useProfile } from '../hooks/useProfile';
 import type { LeadType, Plan } from '../lib/types';
 import { PLAN_DETAILS } from '../lib/types';
@@ -51,8 +52,8 @@ export default function Onboarding() {
     <div style={{ minHeight: '100vh', background: 'var(--color-offwhite)', padding: '48px 16px' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--color-navy)' }}>HARBINGER</div>
-          <p style={{ color: 'var(--color-slate)', fontSize: 13 }}>Let's set up your account.</p>
+          <Logo size={24} style={{ justifyContent: 'center' }} />
+          <p style={{ color: 'var(--color-slate)', fontSize: 13, marginTop: 8 }}>Let's set up your account.</p>
         </div>
 
         <Stepper steps={STEPS} current={step} />

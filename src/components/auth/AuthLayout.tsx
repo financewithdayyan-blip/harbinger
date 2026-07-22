@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Logo } from '../ui/Logo';
 
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
@@ -23,17 +24,8 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div
-            style={{
-              fontSize: 22,
-              fontWeight: 800,
-              color: 'var(--color-navy)',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            HARBINGER
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--color-amber-dark)', fontWeight: 600, marginTop: 2 }}>
+          <Logo size={26} style={{ justifyContent: 'center' }} />
+          <div style={{ fontSize: 12, color: 'var(--color-amber-dark)', fontWeight: 600, marginTop: 6 }}>
             First to know. First to close.
           </div>
         </div>
