@@ -61,6 +61,25 @@ create table if not exists public.admin_users (
 
 alter table public.admin_users enable row level security;
 
+-- Helper: is the current user an admin? SECURITY DEFINER + a table owner
+-- with BYPASSRLS means this query does NOT re-trigger admin_users' own RLS
+-- policies — which is what avoids the "infinite recursion detected in
+-- policy for relation admin_users" error you'd get from a plain
+-- `exists (select 1 from admin_users where ...)` inside admin_users' own
+-- policies (or inside leads' policies, which also call this).
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(
+    (select is_admin from public.admin_users where user_id = auth.uid()),
+    false
+  );
+$$;
+
 -- Any authenticated user can check their own admin row (needed for the
 -- frontend admin-check on login). No one can write to this table from the
 -- client — admin status is only ever toggled by an existing admin via a
@@ -73,40 +92,20 @@ create policy "admin_users_select_own"
 drop policy if exists "admin_users_select_all_if_admin" on public.admin_users;
 create policy "admin_users_select_all_if_admin"
   on public.admin_users for select
-  using (
-    exists (
-      select 1 from public.admin_users au
-      where au.user_id = auth.uid() and au.is_admin = true
-    )
-  );
+  using (public.is_admin());
 
 drop policy if exists "admin_users_update_if_admin" on public.admin_users;
 create policy "admin_users_update_if_admin"
   on public.admin_users for update
-  using (
-    exists (
-      select 1 from public.admin_users au
-      where au.user_id = auth.uid() and au.is_admin = true
-    )
-  )
-  with check (
-    exists (
-      select 1 from public.admin_users au
-      where au.user_id = auth.uid() and au.is_admin = true
-    )
-  );
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- Admins can grant/revoke admin status for a user who doesn't have an
 -- admin_users row yet (the User Management "toggle admin" upsert).
 drop policy if exists "admin_users_insert_if_admin" on public.admin_users;
 create policy "admin_users_insert_if_admin"
   on public.admin_users for insert
-  with check (
-    exists (
-      select 1 from public.admin_users au
-      where au.user_id = auth.uid() and au.is_admin = true
-    )
-  );
+  with check (public.is_admin());
 
 -- Bootstrapping: the policies above mean no client can ever create the
 -- *first* admin (there's no existing admin to authorize it). Seed the
@@ -156,18 +155,8 @@ alter table public.leads enable row level security;
 drop policy if exists "leads_admin_all" on public.leads;
 create policy "leads_admin_all"
   on public.leads for all
-  using (
-    exists (
-      select 1 from public.admin_users au
-      where au.user_id = auth.uid() and au.is_admin = true
-    )
-  )
-  with check (
-    exists (
-      select 1 from public.admin_users au
-      where au.user_id = auth.uid() and au.is_admin = true
-    )
-  );
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- Regular users: read-only, filtered by their plan's states + lead type,
 -- and further narrowed to selected_counties when the user has picked any
