@@ -17,14 +17,14 @@ export interface UserProfile {
 export interface Lead {
   id: string;
   date_pulled: string;
-  case_number: string | null;
   state: string;
   county: string | null;
   list_type: LeadType;
+  lis_pendens_date: string | null;
   auction_date: string | null;
+  violation_description: string | null;
   owner_first: string | null;
   owner_last: string | null;
-  company_entity: string | null;
   phone_1: string | null;
   phone_2: string | null;
   phone_3: string | null;
@@ -46,12 +46,16 @@ export interface Lead {
 // Per-row CSV-mappable fields. list_type, state, county, and date_pulled are
 // batch-level tags set once for the whole upload (see CSVUploader), not
 // mapped per row, so they're intentionally excluded here.
-export const LEAD_COLUMNS: { key: keyof Lead; label: string; required?: boolean }[] = [
-  { key: 'case_number', label: 'Case #' },
-  { key: 'auction_date', label: 'Auction Date' },
+//
+// `appliesTo` scopes a field to one list type (e.g. auction data only makes
+// sense for pre-foreclosures, violation descriptions only for code
+// violations). Fields with no `appliesTo` apply to every list type.
+export const LEAD_COLUMNS: { key: keyof Lead; label: string; required?: boolean; appliesTo?: LeadType[] }[] = [
+  { key: 'lis_pendens_date', label: 'Lis Pendens Date', appliesTo: ['pre_foreclosure'] },
+  { key: 'auction_date', label: 'Auction Date', appliesTo: ['pre_foreclosure'] },
+  { key: 'violation_description', label: 'Violation Description', appliesTo: ['code_violations'] },
   { key: 'owner_first', label: 'Owner First' },
   { key: 'owner_last', label: 'Owner Last' },
-  { key: 'company_entity', label: 'Company/Entity' },
   { key: 'phone_1', label: 'Phone' },
   { key: 'phone_2', label: 'Phone 2' },
   { key: 'phone_3', label: 'Phone 3' },

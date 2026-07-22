@@ -12,14 +12,14 @@ interface LeadsTableProps {
 const COLUMNS: { key: keyof Lead | 'select'; label: string }[] = [
   { key: 'select', label: '' },
   { key: 'date_pulled', label: 'Date Pulled' },
-  { key: 'case_number', label: 'Case #' },
   { key: 'state', label: 'State' },
   { key: 'county', label: 'County' },
   { key: 'list_type', label: 'List Type' },
+  { key: 'lis_pendens_date', label: 'Lis Pendens Date' },
   { key: 'auction_date', label: 'Auction Date' },
+  { key: 'violation_description', label: 'Violation Description' },
   { key: 'owner_first', label: 'Owner First' },
   { key: 'owner_last', label: 'Owner Last' },
-  { key: 'company_entity', label: 'Company/Entity' },
   { key: 'phone_1', label: 'Phone' },
   { key: 'phone_2', label: 'Phone 2' },
   { key: 'email', label: 'Email' },
@@ -137,7 +137,6 @@ export function LeadsTable({ leads, loading, error }: LeadsTableProps) {
                 <input type="checkbox" checked={selected.has(lead.id)} onChange={() => toggleOne(lead.id)} />
               </td>
               <td style={{ padding: '10px 12px' }}>{lead.date_pulled}</td>
-              <td style={{ padding: '10px 12px' }}>{lead.case_number || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.state}</td>
               <td style={{ padding: '10px 12px' }}>{lead.county || '—'}</td>
               <td style={{ padding: '10px 12px' }}>
@@ -145,10 +144,11 @@ export function LeadsTable({ leads, loading, error }: LeadsTableProps) {
                   {LEAD_TYPE_LABELS[lead.list_type] ?? lead.list_type}
                 </Badge>
               </td>
+              <td style={{ padding: '10px 12px' }}>{lead.lis_pendens_date || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.auction_date || '—'}</td>
+              <td style={{ padding: '10px 12px' }}>{lead.violation_description || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.owner_first || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.owner_last || '—'}</td>
-              <td style={{ padding: '10px 12px' }}>{lead.company_entity || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.phone_1 || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.phone_2 || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.email || '—'}</td>

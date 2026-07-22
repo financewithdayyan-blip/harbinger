@@ -119,14 +119,14 @@ create policy "admin_users_insert_if_admin"
 create table if not exists public.leads (
   id uuid primary key default gen_random_uuid(),
   date_pulled date not null default current_date,
-  case_number text,
   state text not null,
   county text,
   list_type text not null check (list_type in ('pre_foreclosure', 'code_violations')),
+  lis_pendens_date date,
   auction_date date,
+  violation_description text,
   owner_first text,
   owner_last text,
-  company_entity text,
   phone_1 text,
   phone_2 text,
   phone_3 text,
@@ -158,6 +158,15 @@ alter table public.leads add column if not exists sqft text;
 alter table public.leads add column if not exists lot_size text;
 alter table public.leads add column if not exists property_type text;
 alter table public.leads add column if not exists notes text;
+
+-- Case # and Company/Entity turned out to be unused; lis_pendens_date and
+-- violation_description are list-type-specific fields (pre-foreclosure and
+-- code violations respectively) surfaced only for their matching list type
+-- in the CSV upload mapper.
+alter table public.leads drop column if exists case_number;
+alter table public.leads drop column if exists company_entity;
+alter table public.leads add column if not exists lis_pendens_date date;
+alter table public.leads add column if not exists violation_description text;
 
 create index if not exists leads_state_idx on public.leads (state);
 create index if not exists leads_list_type_idx on public.leads (list_type);

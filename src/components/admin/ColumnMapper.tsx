@@ -6,9 +6,10 @@ interface ColumnMapperProps {
   csvHeaders: string[];
   mapping: ColumnMapping;
   onChange: (mapping: ColumnMapping) => void;
+  columns?: typeof LEAD_COLUMNS;
 }
 
-export function ColumnMapper({ csvHeaders, mapping, onChange }: ColumnMapperProps) {
+export function ColumnMapper({ csvHeaders, mapping, onChange, columns = LEAD_COLUMNS }: ColumnMapperProps) {
   function setMapping(key: keyof Lead, header: string) {
     onChange({ ...mapping, [key]: header || undefined });
   }
@@ -23,7 +24,7 @@ export function ColumnMapper({ csvHeaders, mapping, onChange }: ColumnMapperProp
           </tr>
         </thead>
         <tbody>
-          {LEAD_COLUMNS.map((col) => (
+          {columns.map((col) => (
             <tr key={col.key} style={{ borderBottom: '1px solid var(--color-border)' }}>
               <td style={{ padding: '8px 12px', fontWeight: 600 }}>
                 {col.label}

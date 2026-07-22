@@ -29,9 +29,13 @@ function normalize(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-function autoMap(headers: string[]): ColumnMapping {
+function columnsFor(listType: LeadType) {
+  return LEAD_COLUMNS.filter((c) => !c.appliesTo || c.appliesTo.includes(listType));
+}
+
+function autoMap(headers: string[], listType: LeadType): ColumnMapping {
   const mapping: ColumnMapping = {};
-  for (const col of LEAD_COLUMNS) {
+  for (const col of columnsFor(listType)) {
     const target = normalize(col.label);
     const match = headers.find((h) => normalize(h) === target || normalize(h) === normalize(col.key));
     if (match) mapping[col.key] = match;
@@ -47,6 +51,7 @@ export function CSVUploader() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [parsed, setParsed] = useState<ParseResult | null>(null);
+  const [step, setStep] = useState<'tag' | 'map'>('tag');
   const [mapping, setMapping] = useState<ColumnMapping>({});
 
   // Batch-level tags: one state, one county, one list type, one date pulled
@@ -64,13 +69,14 @@ export function CSVUploader() {
   function handleFile(file: File) {
     setSummary(null);
     setErrors([]);
+    setStep('tag');
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
         const headers = results.meta.fields ?? [];
         setParsed({ headers, rows: results.data });
-        setMapping(autoMap(headers));
+        setMapping(autoMap(headers, listType));
       },
     });
   }
@@ -84,6 +90,7 @@ export function CSVUploader() {
 
   function reset() {
     setParsed(null);
+    setStep('tag');
     setMapping({});
     setErrors([]);
     setSummary(null);
@@ -94,7 +101,8 @@ export function CSVUploader() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  const requiredMissing = LEAD_COLUMNS.filter((c) => c.required && !mapping[c.key]);
+  const visibleColumns = columnsFor(listType);
+  const requiredMissing = visibleColumns.filter((c) => c.required && !mapping[c.key]);
   const batchTagsMissing = !state || !county.trim() || !datePulled;
 
   async function handleUpload() {
@@ -109,12 +117,12 @@ export function CSVUploader() {
 
     parsed.rows.forEach((raw, index) => {
       const lead: Record<string, string | null> = {};
-      for (const col of LEAD_COLUMNS) {
+      for (const col of visibleColumns) {
         const header = mapping[col.key];
         lead[col.key] = header ? (raw[header]?.trim() || null) : null;
       }
 
-      const missing = LEAD_COLUMNS.filter((c) => c.required && !lead[c.key]);
+      const missing = visibleColumns.filter((c) => c.required && !lead[c.key]);
       if (missing.length > 0) {
         rowErrors.push({ row: index + 2, reason: `Missing ${missing.map((m) => m.label).join(', ')}` });
         return;
@@ -208,88 +216,115 @@ export function CSVUploader() {
             </Button>
           </div>
 
-          <div
-            style={{
-              border: '1px solid var(--color-border)',
-              borderRadius: 10,
-              padding: 16,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-              gap: 14,
-              background: '#fff',
-            }}
-          >
-            <BatchField label="List Type">
-              <select
-                value={listType}
-                onChange={(e) => setListType(e.target.value as LeadType)}
-                style={fieldStyle}
+          <Stepper current={step} />
+
+          {step === 'tag' && (
+            <>
+              <div
+                style={{
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 10,
+                  padding: 16,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                  gap: 14,
+                  background: '#fff',
+                }}
               >
-                <option value="pre_foreclosure">Pre-Foreclosure</option>
-                <option value="code_violations">Code Violations</option>
-              </select>
-            </BatchField>
+                <BatchField label="List Type">
+                  <select
+                    value={listType}
+                    onChange={(e) => {
+                      const next = e.target.value as LeadType;
+                      setListType(next);
+                      if (parsed) setMapping(autoMap(parsed.headers, next));
+                    }}
+                    style={fieldStyle}
+                  >
+                    <option value="pre_foreclosure">Pre-Foreclosure</option>
+                    <option value="code_violations">Code Violations</option>
+                  </select>
+                </BatchField>
 
-            <BatchField label="State" required>
-              <select value={state} onChange={(e) => setState(e.target.value)} style={fieldStyle}>
-                <option value="">Select…</option>
-                {US_STATES.map((s) => (
-                  <option key={s.code} value={s.code}>
-                    {s.name} ({s.code})
-                  </option>
-                ))}
-              </select>
-            </BatchField>
+                <BatchField label="State" required>
+                  <select value={state} onChange={(e) => setState(e.target.value)} style={fieldStyle}>
+                    <option value="">Select…</option>
+                    {US_STATES.map((s) => (
+                      <option key={s.code} value={s.code}>
+                        {s.name} ({s.code})
+                      </option>
+                    ))}
+                  </select>
+                </BatchField>
 
-            <BatchField label="County" required>
-              <input
-                type="text"
-                value={county}
-                onChange={(e) => setCounty(e.target.value)}
-                placeholder="e.g. Maricopa"
-                style={fieldStyle}
-              />
-            </BatchField>
+                <BatchField label="County" required>
+                  <input
+                    type="text"
+                    value={county}
+                    onChange={(e) => setCounty(e.target.value)}
+                    placeholder="e.g. Maricopa"
+                    style={fieldStyle}
+                  />
+                </BatchField>
 
-            <BatchField label="Date Pulled" required>
-              <input
-                type="date"
-                value={datePulled}
-                onChange={(e) => setDatePulled(e.target.value)}
-                style={fieldStyle}
-              />
-            </BatchField>
-          </div>
-
-          <ColumnMapper csvHeaders={parsed.headers} mapping={mapping} onChange={setMapping} />
-
-          {(requiredMissing.length > 0 || batchTagsMissing) && (
-            <p style={{ fontSize: 13, color: 'var(--color-danger)' }}>
-              {batchTagsMissing && 'Fill in State, County, and Date Pulled above. '}
-              {requiredMissing.length > 0 &&
-                `Map required fields before uploading: ${requiredMissing.map((m) => m.label).join(', ')}`}
-            </p>
-          )}
-
-          {uploading && (
-            <div>
-              <div style={{ background: 'var(--color-border)', borderRadius: 6, height: 10, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${progress}%`,
-                    background: 'var(--color-amber)',
-                    height: '100%',
-                    transition: 'width 150ms ease',
-                  }}
-                />
+                <BatchField label="Date Pulled" required>
+                  <input
+                    type="date"
+                    value={datePulled}
+                    onChange={(e) => setDatePulled(e.target.value)}
+                    style={fieldStyle}
+                  />
+                </BatchField>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--color-slate)', marginTop: 4 }}>{progress}% uploaded</p>
-            </div>
+
+              {batchTagsMissing && (
+                <p style={{ fontSize: 13, color: 'var(--color-danger)' }}>
+                  Fill in State, County, and Date Pulled to continue.
+                </p>
+              )}
+
+              <Button onClick={() => setStep('map')} disabled={batchTagsMissing}>
+                Continue to field mapping
+              </Button>
+            </>
           )}
 
-          <Button onClick={handleUpload} loading={uploading} disabled={requiredMissing.length > 0 || batchTagsMissing}>
-            Upload {parsed.rows.length} rows
-          </Button>
+          {step === 'map' && (
+            <>
+              <ColumnMapper csvHeaders={parsed.headers} mapping={mapping} onChange={setMapping} columns={visibleColumns} />
+
+              {requiredMissing.length > 0 && (
+                <p style={{ fontSize: 13, color: 'var(--color-danger)' }}>
+                  Map required fields before uploading: {requiredMissing.map((m) => m.label).join(', ')}
+                </p>
+              )}
+
+              {uploading && (
+                <div>
+                  <div style={{ background: 'var(--color-border)', borderRadius: 6, height: 10, overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: `${progress}%`,
+                        background: 'var(--color-amber)',
+                        height: '100%',
+                        transition: 'width 150ms ease',
+                      }}
+                    />
+                  </div>
+                  <p style={{ fontSize: 12, color: 'var(--color-slate)', marginTop: 4 }}>{progress}% uploaded</p>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button variant="ghost" onClick={() => setStep('tag')} disabled={uploading}>
+                  Back
+                </Button>
+                <Button onClick={handleUpload} loading={uploading} disabled={requiredMissing.length > 0}>
+                  Upload {parsed.rows.length} rows
+                </Button>
+              </div>
+            </>
+          )}
         </>
       )}
 
@@ -361,6 +396,40 @@ function BatchField({ label, required, children }: { label: string; required?: b
         {required && <span style={{ color: 'var(--color-danger)' }}> *</span>}
       </label>
       {children}
+    </div>
+  );
+}
+
+function Stepper({ current }: { current: 'tag' | 'map' }) {
+  const steps: { key: 'tag' | 'map'; label: string }[] = [
+    { key: 'tag', label: '1. Tag this batch' },
+    { key: 'map', label: '2. Map fields' },
+  ];
+  const currentIndex = steps.findIndex((s) => s.key === current);
+
+  return (
+    <div style={{ display: 'flex', gap: 8 }}>
+      {steps.map((s, i) => (
+        <div key={s.key} style={{ flex: 1 }}>
+          <div
+            style={{
+              height: 4,
+              borderRadius: 2,
+              background: i <= currentIndex ? 'var(--color-amber)' : 'var(--color-border)',
+              marginBottom: 6,
+            }}
+          />
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: i <= currentIndex ? 'var(--color-navy)' : 'var(--color-slate-light)',
+            }}
+          >
+            {s.label}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
