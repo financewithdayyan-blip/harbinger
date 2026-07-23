@@ -100,7 +100,12 @@ Deno.serve(async (req) => {
 
   const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-  if (eventType === 'subscription.created' || eventType === 'subscription.updated') {
+  if (
+    eventType === 'subscription.created' ||
+    eventType === 'subscription.updated' ||
+    eventType === 'subscription.activated' ||
+    eventType === 'subscription.resumed'
+  ) {
     const priceId: string | undefined = data.items?.[0]?.price?.id;
     const tier = priceId ? tierForPriceId(priceId) : null;
     const periodEndsAt: string | undefined = data.current_billing_period?.ends_at;
