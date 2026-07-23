@@ -22,6 +22,7 @@ const COLUMNS: { key: keyof Lead | 'select'; label: string }[] = [
   { key: 'owner_last', label: 'Owner Last' },
   { key: 'phone_1', label: 'Phone' },
   { key: 'phone_2', label: 'Phone 2' },
+  { key: 'phone_3', label: 'Phone 3' },
   { key: 'email', label: 'Email' },
   { key: 'email_2', label: 'Email 2' },
   { key: 'property_street', label: 'Property Street' },
@@ -151,6 +152,7 @@ export function LeadsTable({ leads, loading, error }: LeadsTableProps) {
               <td style={{ padding: '10px 12px' }}>{lead.owner_last || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.phone_1 || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.phone_2 || '—'}</td>
+              <td style={{ padding: '10px 12px' }}>{lead.phone_3 || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.email || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.email_2 || '—'}</td>
               <td style={{ padding: '10px 12px' }}>{lead.property_street || '—'}</td>
