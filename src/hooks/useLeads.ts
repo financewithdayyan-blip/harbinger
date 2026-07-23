@@ -30,8 +30,12 @@ export function useLeads(filters: LeadsFilters, page: number) {
     setLoading(true);
     setError(null);
 
+    // leads_for_user masks PII (owner name/phone/email) server-side for
+    // rows the current user hasn't revealed yet — see schema.sql. Admins
+    // use the raw `leads` table directly (CSVUploader/UserTable), which
+    // still has full access.
     let query = supabase
-      .from('leads')
+      .from('leads_for_user')
       .select('*', { count: 'exact' })
       .order('date_pulled', { ascending: false });
 

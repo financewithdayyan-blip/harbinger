@@ -30,6 +30,19 @@ create table if not exists public.user_profiles (
 alter table public.user_profiles
   add column if not exists selected_counties text[] not null default '{}';
 
+-- Paddle subscription tier + skiptrace credit tracking. `tier` mirrors
+-- config/tiers.ts's Tier['name'] and is synced by the paddle-webhook edge
+-- function whenever a subscription is created/updated/canceled — it's the
+-- source of truth for skiptrace_credits_limit, not something the client sets.
+alter table public.user_profiles
+  add column if not exists tier text check (tier in ('Starter', 'Pro', 'Advanced', 'Extreme'));
+alter table public.user_profiles add column if not exists skiptrace_credits_used int not null default 0;
+alter table public.user_profiles add column if not exists skiptrace_credits_limit int not null default 0;
+alter table public.user_profiles add column if not exists credits_reset_at timestamptz;
+alter table public.user_profiles add column if not exists paddle_customer_id text;
+alter table public.user_profiles add column if not exists paddle_subscription_id text;
+alter table public.user_profiles add column if not exists subscription_status text;
+
 alter table public.user_profiles enable row level security;
 
 -- Users can read their own profile
@@ -168,6 +181,15 @@ alter table public.leads drop column if exists company_entity;
 alter table public.leads add column if not exists lis_pendens_date date;
 alter table public.leads add column if not exists violation_description text;
 
+-- Skiptrace credit reveal system: PII stays masked (see leads_for_user view
+-- below) until a user spends a credit through the reveal-lead edge function,
+-- which is the only thing allowed to flip is_revealed — never the client
+-- directly, and never a plain UPDATE through PostgREST (no RLS UPDATE
+-- policy exists for regular users on this table, only the admin one above).
+alter table public.leads add column if not exists is_revealed boolean not null default false;
+alter table public.leads add column if not exists revealed_by uuid references auth.users (id);
+alter table public.leads add column if not exists revealed_at timestamptz;
+
 create index if not exists leads_state_idx on public.leads (state);
 create index if not exists leads_list_type_idx on public.leads (list_type);
 create index if not exists leads_date_pulled_idx on public.leads (date_pulled);
@@ -205,6 +227,108 @@ create policy "leads_select_by_plan"
         )
     )
   );
+
+-- Regular (non-admin) dashboard reads go through this view instead of the
+-- base table. `security_invoker = true` means it still runs under the
+-- querying user's own RLS (leads_select_by_plan above still applies for row
+-- visibility) — this view only adds column-level masking on top: PII stays
+-- null until is_revealed is true. Blurring in the UI alone isn't real
+-- security since the raw API response would still contain the data; this is
+-- what actually keeps it out of the response for un-revealed rows.
+drop view if exists public.leads_for_user;
+create view public.leads_for_user
+with (security_invoker = true) as
+select
+  id,
+  date_pulled,
+  state,
+  county,
+  list_type,
+  lis_pendens_date,
+  auction_date,
+  violation_description,
+  case when is_revealed then owner_first else null end as owner_first,
+  case when is_revealed then owner_last else null end as owner_last,
+  case when is_revealed then phone_1 else null end as phone_1,
+  case when is_revealed then phone_2 else null end as phone_2,
+  case when is_revealed then phone_3 else null end as phone_3,
+  case when is_revealed then email else null end as email,
+  case when is_revealed then email_2 else null end as email_2,
+  property_street,
+  property_city,
+  property_state,
+  property_zip,
+  beds,
+  baths,
+  sqft,
+  lot_size,
+  property_type,
+  notes,
+  is_revealed,
+  revealed_at,
+  created_at
+from public.leads;
+
+grant select on public.leads_for_user to authenticated;
+
+-- Atomically deducts one credit and reveals a lead. Row-locks both the
+-- profile and the lead so two simultaneous reveal requests can't both pass
+-- the credit check. Already-revealed leads return as-is with no charge —
+-- a reveal is a one-time global unlock for the lead, not a per-user credit
+-- spend every time someone views it. Execute is restricted to service_role
+-- only: this must be called from the reveal-lead edge function (which
+-- derives p_user_id from the caller's verified JWT), never directly from
+-- the client SDK with an arbitrary user id.
+create or replace function public.reveal_lead(p_lead_id uuid, p_user_id uuid)
+returns public.leads
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_used int;
+  v_limit int;
+  v_lead public.leads;
+begin
+  select skiptrace_credits_used, skiptrace_credits_limit
+    into v_used, v_limit
+    from public.user_profiles
+    where id = p_user_id
+    for update;
+
+  if not found or v_limit is null or v_limit = 0 then
+    raise exception 'no_active_subscription';
+  end if;
+
+  select * into v_lead from public.leads where id = p_lead_id for update;
+  if not found then
+    raise exception 'lead_not_found';
+  end if;
+
+  if v_lead.is_revealed then
+    return v_lead;
+  end if;
+
+  if v_used >= v_limit then
+    raise exception 'insufficient_credits';
+  end if;
+
+  update public.user_profiles
+    set skiptrace_credits_used = skiptrace_credits_used + 1
+    where id = p_user_id;
+
+  update public.leads
+    set is_revealed = true, revealed_by = p_user_id, revealed_at = now()
+    where id = p_lead_id
+    returning * into v_lead;
+
+  return v_lead;
+end;
+$$;
+
+revoke all on function public.reveal_lead(uuid, uuid) from public;
+revoke all on function public.reveal_lead(uuid, uuid) from authenticated;
+grant execute on function public.reveal_lead(uuid, uuid) to service_role;
 
 -- ----------------------------------------------------------------------------
 -- Helper: auto-create a blank user_profiles row on signup

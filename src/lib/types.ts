@@ -11,6 +11,11 @@ export interface UserProfile {
   selected_states: string[];
   selected_counties: string[];
   onboarding_complete: boolean;
+  tier: 'Starter' | 'Pro' | 'Advanced' | 'Extreme' | null;
+  skiptrace_credits_used: number;
+  skiptrace_credits_limit: number;
+  credits_reset_at: string | null;
+  subscription_status: string | null;
   created_at: string;
 }
 
@@ -40,6 +45,8 @@ export interface Lead {
   lot_size: string | null;
   property_type: string | null;
   notes: string | null;
+  is_revealed: boolean;
+  revealed_at: string | null;
   created_at: string;
 }
 

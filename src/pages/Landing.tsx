@@ -1,13 +1,10 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { MarketingNav } from '../components/marketing/MarketingNav';
-import { PlanCard } from '../components/marketing/PlanCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import type { Plan } from '../lib/types';
+import { TIERS } from '../config/tiers';
 import './Landing.css';
-
-const PLAN_ORDER: Plan[] = ['single_state', 'multi_state', 'nationwide'];
 
 const LEAD_TYPES = [
   { label: 'Pre-Foreclosure', active: true },
@@ -15,6 +12,7 @@ const LEAD_TYPES = [
   { label: 'Probate', active: false },
   { label: 'Tax Delinquent', active: false },
   { label: 'Divorce', active: false },
+  { label: 'Liens', active: false },
 ];
 
 const TICKER_ITEMS = [
@@ -269,15 +267,32 @@ export default function Landing() {
       {/* Plans teaser */}
       <section className="hb-diagonal-down" style={{ background: 'var(--color-offwhite)', paddingBottom: 72 }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', textAlign: 'center', padding: '0 24px' }}>
-          <h2 style={{ fontSize: 28, marginBottom: 8 }}>Pick your coverage</h2>
+          <h2 style={{ fontSize: 28, marginBottom: 8 }}>Pick your credits</h2>
           <p style={{ color: 'var(--color-slate)', marginBottom: 48 }}>
-            Free during early access. Choose how much ground you want to cover.
+            Every plan includes a monthly pool of skiptrace credits to reveal lead contact info.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 28, textAlign: 'left' }}>
-            {PLAN_ORDER.map((plan) => (
-              <PlanCard key={plan} plan={plan} featured={plan === 'nationwide'}>
-                <Badge tone="amber">FREE (for now)</Badge>
-              </PlanCard>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20, textAlign: 'left' }}>
+            {TIERS.map((tier) => (
+              <div
+                key={tier.name}
+                className="hb-card"
+                style={{
+                  background: '#fff',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 14,
+                  padding: 22,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                <h3 style={{ fontSize: 16 }}>{tier.name}</h3>
+                <p style={{ fontSize: 13, color: 'var(--color-slate)', margin: 0 }}>{tier.description}</p>
+                <Badge tone="amber">
+                  {tier.skiptraceCredits === 'Unlimited' ? 'Unlimited' : tier.skiptraceCredits.toLocaleString()}{' '}
+                  credits/mo
+                </Badge>
+              </div>
             ))}
           </div>
           <Link
@@ -310,11 +325,11 @@ export default function Landing() {
         <div style={{ position: 'relative', textAlign: 'center', padding: '0 24px' }}>
           <h2 style={{ fontSize: 28, color: '#fff', marginBottom: 12 }}>Be first to the door.</h2>
           <p style={{ color: 'rgba(248,246,241,0.7)', marginBottom: 28 }}>
-            Set up your account in under two minutes — no card required.
+            Create your account free, then pick a credit plan when you're ready.
           </p>
           <Link to="/signup" style={{ textDecoration: 'none' }}>
             <Button variant="primary" style={{ padding: '14px 28px', fontSize: 15 }}>
-              Get Started Free
+              Get Started
             </Button>
           </Link>
         </div>

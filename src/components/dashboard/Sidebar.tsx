@@ -1,7 +1,8 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { signOut } from '../../lib/auth';
 import { Logo } from '../ui/Logo';
+import { creditsRemaining } from '../../lib/credits';
 
 export function Sidebar() {
   const navigate = useNavigate();
@@ -31,6 +32,8 @@ export function Sidebar() {
           First to know. First to close.
         </div>
       </div>
+
+      <CreditsCounter />
 
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
         <SidebarLink to="/dashboard" label="Leads" />
@@ -62,6 +65,54 @@ export function Sidebar() {
         </button>
       </div>
     </aside>
+  );
+}
+
+function CreditsCounter() {
+  const { profile } = useAuth();
+
+  if (!profile) return null;
+
+  if (!profile.tier) {
+    return (
+      <Link
+        to="/pricing"
+        style={{
+          display: 'block',
+          marginBottom: 20,
+          padding: '10px 12px',
+          borderRadius: 8,
+          border: '1px solid rgba(245,166,35,0.4)',
+          background: 'rgba(245,166,35,0.08)',
+          fontSize: 12,
+          fontWeight: 600,
+          color: 'var(--color-amber)',
+          textDecoration: 'none',
+        }}
+      >
+        No active plan — choose one →
+      </Link>
+    );
+  }
+
+  const remaining = creditsRemaining(profile.skiptrace_credits_used, profile.skiptrace_credits_limit);
+
+  return (
+    <div
+      style={{
+        marginBottom: 20,
+        padding: '10px 12px',
+        borderRadius: 8,
+        background: 'rgba(248,246,241,0.06)',
+        fontSize: 12,
+      }}
+      title="Each credit unlocks one lead's full contact info"
+    >
+      <div style={{ fontWeight: 700, color: 'var(--color-amber)' }}>
+        {remaining.toLocaleString()} credits remaining
+      </div>
+      <div style={{ opacity: 0.6, marginTop: 2 }}>{profile.tier} plan</div>
+    </div>
   );
 }
 
