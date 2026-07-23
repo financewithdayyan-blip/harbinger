@@ -2,8 +2,25 @@ import { useRef, useState, type DragEvent, type ReactNode } from 'react';
 import Papa from 'papaparse';
 import { supabase } from '../../lib/supabase';
 import { LEAD_COLUMNS, US_STATES, type Lead, type LeadType } from '../../lib/types';
+import { countiesForState } from '../../lib/counties';
 import { ColumnMapper, type ColumnMapping } from './ColumnMapper';
 import { Button } from '../ui/Button';
+
+const PHONE_FIELDS = new Set(['phone_1', 'phone_2', 'phone_3']);
+
+// Normalizes messy CSV phone values (numeric-export artifacts like
+// "9418071909.0", stray punctuation, etc.) into "+1 xxx xxx xxxx". Falls
+// back to the original trimmed value for anything that isn't a recognizable
+// 10-digit US number, rather than mangling data we can't confidently parse.
+function formatPhone(raw: string): string {
+  const trimmed = raw.trim();
+  let digits = trimmed.replace(/\.0+$/, '').replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) {
+    digits = digits.slice(1);
+  }
+  if (digits.length !== 10) return trimmed;
+  return `+1 ${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+}
 
 const BATCH_SIZE = 500;
 
@@ -119,7 +136,8 @@ export function CSVUploader() {
       const lead: Record<string, string | null> = {};
       for (const col of visibleColumns) {
         const header = mapping[col.key];
-        lead[col.key] = header ? (raw[header]?.trim() || null) : null;
+        const value = header ? raw[header]?.trim() || null : null;
+        lead[col.key] = value && PHONE_FIELDS.has(col.key) ? formatPhone(value) : value;
       }
 
       const missing = visibleColumns.filter((c) => c.required && !lead[c.key]);
@@ -247,7 +265,14 @@ export function CSVUploader() {
                 </BatchField>
 
                 <BatchField label="State" required>
-                  <select value={state} onChange={(e) => setState(e.target.value)} style={fieldStyle}>
+                  <select
+                    value={state}
+                    onChange={(e) => {
+                      setState(e.target.value);
+                      setCounty('');
+                    }}
+                    style={fieldStyle}
+                  >
                     <option value="">Select…</option>
                     {US_STATES.map((s) => (
                       <option key={s.code} value={s.code}>
@@ -258,13 +283,19 @@ export function CSVUploader() {
                 </BatchField>
 
                 <BatchField label="County" required>
-                  <input
-                    type="text"
+                  <select
                     value={county}
                     onChange={(e) => setCounty(e.target.value)}
-                    placeholder="e.g. Maricopa"
+                    disabled={!state}
                     style={fieldStyle}
-                  />
+                  >
+                    <option value="">{state ? 'Select…' : 'Select a state first'}</option>
+                    {countiesForState(state).map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
                 </BatchField>
 
                 <BatchField label="Date Pulled" required>

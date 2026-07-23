@@ -96,7 +96,7 @@ export default function Onboarding() {
                 Optional. Add counties to only get leads from those — leave it empty to get every
                 county in your selected states.
               </p>
-              <CountySelector value={counties} onChange={setCounties} />
+              <CountySelector plan={plan ?? 'single_state'} states={states} value={counties} onChange={setCounties} />
             </>
           )}
           {step === 4 && plan && leadType && (
